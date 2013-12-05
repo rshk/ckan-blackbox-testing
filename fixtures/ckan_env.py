@@ -40,7 +40,7 @@ def virtualenv(cleandir):
     assert os.path.exists(os.path.join(venv_root, 'bin', 'python'))
     assert os.path.exists(os.path.join(venv_root, 'bin', 'pip'))
 
-    return cleandir
+    return venv_root
 
 
 @pytest.fixture(scope='session')
@@ -132,9 +132,14 @@ def ckan_installation(virtualenv, clean_database, clean_solr_index):
 
     PIP = os.path.join(virtualenv, 'bin', 'pip')
     PYTHON = os.path.join(virtualenv, 'bin', 'python')
+
+    assert os.path.exists(PIP)
+    assert os.path.exists(PYTHON)
+
     subprocess.check_call([
         PIP, 'install', '-r', os.path.join(ckan_dir, 'requirements.txt')
     ])
+
     subprocess.check_call([PYTHON, 'setup.py', 'install'])
 
     PASTER = os.path.join(virtualenv, 'bin', 'paster')

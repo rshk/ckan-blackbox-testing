@@ -58,7 +58,7 @@ def clean_database():
     ])
     subprocess.check_call([
         'sudo', '-u', 'postgres', 'psql', '-c',
-        "CREATE DATABASE {name} WITH OWNER '{username}';".format(**db_data)
+        "CREATE DATABASE {name} WITH OWNER {username};".format(**db_data)
     ])
 
     return "postgresql://{username}:{password}@{host}/{name}".format(**db_data)

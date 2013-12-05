@@ -40,6 +40,8 @@ def virtualenv(cleandir):
     assert os.path.exists(os.path.join(venv_root, 'bin', 'python'))
     assert os.path.exists(os.path.join(venv_root, 'bin', 'pip'))
 
+    return cleandir
+
 
 @pytest.fixture(scope='session')
 def clean_database():

@@ -11,4 +11,4 @@ install:
   - pip install pytest requests
 
 script:
-  - py.test api_testing
+  - py.test -v api_testing

@@ -113,7 +113,7 @@ def ckan_installation(virtualenv, clean_database, clean_solr_index):
     ckan_conf_file = os.path.join(context['confdir'], 'ckan.ini')
 
     with open(ckan_conf_file, 'w') as f:
-        f.write(CKAN_CONF).format(**context)
+        f.write(CKAN_CONF.format(**context))
 
     with open(os.path.join(HERE, 'data', 'who.ini'), 'r') as f:
         WHO_INI = f.read()

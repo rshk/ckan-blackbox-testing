@@ -47,7 +47,7 @@ def clean_database():
 
     db_data = {
         "host": 'localhost:5432',
-        "name": 'ckan_{0:6d}'.format(random.randint(0, 10 ** 6)),
+        "name": 'ckan_{0:06d}'.format(random.randint(0, 10 ** 6)),
         "username": 'ckan',
         "password": 'ckan',
     }

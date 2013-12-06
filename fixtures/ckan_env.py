@@ -127,9 +127,9 @@ def clean_solr_index(request):
 
 @pytest.fixture(scope='session')
 def virtualenv_with_ckan(virtualenv):
-    datadir = os.path.join(virtualenv, 'data'),
+    datadir = os.path.join(virtualenv, 'data')
     os.makedirs(datadir)
-    confdir = os.path.join(virtualenv, 'etc', 'ckan'),
+    confdir = os.path.join(virtualenv, 'etc', 'ckan')
     os.makedirs(confdir)
     sources_dir = os.path.join(virtualenv, 'src')
     os.makedirs(sources_dir)

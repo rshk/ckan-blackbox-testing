@@ -27,7 +27,7 @@ def cleandir(request):
     tmpdir = tempfile.mkdtemp()
 
     def cleanup():
-        shutil.rmtree(tmpdir)
+        subprocess.call(['sudo', 'rm', '-rfv', tmpdir])
     request.addfinalizer(cleanup)
 
     return tmpdir

@@ -22,7 +22,7 @@ with open(os.path.join(HERE, 'data', 'ckan.ini')) as f:
     CKAN_CONF = f.read()
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope='session')
 def cleandir(request):
     tmpdir = tempfile.mkdtemp()
 
@@ -33,7 +33,7 @@ def cleandir(request):
     return tmpdir
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope='session')
 def virtualenv(request, cleandir):
     """Returns path to a fresh virtualenv, created using the current Python"""
 
@@ -125,18 +125,43 @@ def clean_solr_index(request):
     return "http://127.0.0.1:8983/solr"
 
 
+@pytest.fixture(scope='session')
+def virtualenv_with_ckan(virtualenv):
+    datadir = os.path.join(virtualenv, 'data'),
+    os.makedirs(datadir)
+    confdir = os.path.join(virtualenv, 'etc', 'ckan'),
+    os.makedirs(confdir)
+    sources_dir = os.path.join(virtualenv, 'src')
+    os.makedirs(sources_dir)
+    ckan_dir = os.path.join(sources_dir, 'ckan')
+
+    ## Now we can install stuff..
+    subprocess.check_call([
+        'git', 'clone', 'https://github.com/okfn/ckan', ckan_dir])
+    os.chdir(ckan_dir)
+
+    PIP = os.path.join(virtualenv, 'bin', 'pip')
+    PYTHON = os.path.join(virtualenv, 'bin', 'python')
+    assert os.path.exists(PIP)
+    assert os.path.exists(PYTHON)
+
+    subprocess.check_call([
+        PIP, 'install', '-r', os.path.join(ckan_dir, 'requirements.txt')
+    ])
+    subprocess.check_call([PYTHON, 'setup.py', 'install'])
+
+    return virtualenv
+
+
 @pytest.fixture(scope='module')
-def ckan_installation(virtualenv, clean_database, clean_solr_index):
+def ckan_installation(virtualenv_with_ckan, clean_database, clean_solr_index):
     context = {
-        'venv': virtualenv,
+        'venv': virtualenv_with_ckan,
         'db_url': clean_database,
         'solr_url': clean_solr_index,
-        'datadir': os.path.join(virtualenv, 'data'),
-        'confdir': os.path.join(virtualenv, 'etc', 'ckan'),
+        'datadir': os.path.join(virtualenv_with_ckan, 'data'),
+        'confdir': os.path.join(virtualenv_with_ckan, 'etc', 'ckan'),
     }
-    os.makedirs(context['datadir'])
-    os.makedirs(context['confdir'])
-
     ckan_conf_file = os.path.join(context['confdir'], 'ckan.ini')
 
     with open(ckan_conf_file, 'w') as f:
@@ -148,31 +173,11 @@ def ckan_installation(virtualenv, clean_database, clean_solr_index):
     with open(os.path.join(context['confdir'], 'who.ini'), 'w') as f:
         f.write(WHO_INI)
 
-    ## Ok, now we can install stuff..
-    sources_dir = os.path.join(virtualenv, 'src')
-    ckan_dir = os.path.join(sources_dir, 'ckan')
-    os.makedirs(sources_dir)
-    subprocess.check_call([
-        'git', 'clone', 'https://github.com/okfn/ckan', ckan_dir])
-
-    os.chdir(ckan_dir)
-
-    PIP = os.path.join(virtualenv, 'bin', 'pip')
-    PYTHON = os.path.join(virtualenv, 'bin', 'python')
-
-    assert os.path.exists(PIP)
-    assert os.path.exists(PYTHON)
-
-    subprocess.check_call([
-        PIP, 'install', '-r', os.path.join(ckan_dir, 'requirements.txt')
-    ])
-
-    subprocess.check_call([PYTHON, 'setup.py', 'install'])
-
-    PASTER = os.path.join(virtualenv, 'bin', 'paster')
+    PASTER = os.path.join(virtualenv_with_ckan, 'bin', 'paster')
+    assert os.path.exists(PASTER)
     subprocess.check_call([PASTER, 'db', '--conf', ckan_conf_file, 'init'])
 
-    return virtualenv
+    return virtualenv_with_ckan
 
 
 @pytest.fixture(scope='module')

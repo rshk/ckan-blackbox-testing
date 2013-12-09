@@ -15,5 +15,6 @@ script:
 
 env:
     matrix:
-        - REPO_URL=https://github.com/okfn/ckan#maste
+        - REPO_URL=https://github.com/okfn/ckan#master
+        - REPO_URL=https://github.com/rshk/ckan#master
         - REPO_URL=https://github.com/rshk/ckan#bug-1363-error-500-api-empty-database

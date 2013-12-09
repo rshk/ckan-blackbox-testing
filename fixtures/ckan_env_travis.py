@@ -136,8 +136,14 @@ def virtualenv_with_ckan(virtualenv):
     ckan_dir = os.path.join(sources_dir, 'ckan')
 
     ## Now we can install stuff..
+    REPO_URL = os.environ.get(
+        'REPO_URL', 'https://github.com/okfn/ckan#master')
+    if '#' in REPO_URL:
+        REPO_URL, REPO_BRANCH = REPO_URL.split('#')
+    else:
+        REPO_BRANCH = 'master'
     subprocess.check_call([
-        'git', 'clone', 'https://github.com/okfn/ckan', ckan_dir])
+        'git', 'clone', REPO_URL, '-b', REPO_BRANCH, '--depth=0', ckan_dir])
     os.chdir(ckan_dir)
 
     PIP = os.path.join(virtualenv, 'bin', 'pip')
@@ -182,6 +188,13 @@ def ckan_installation(virtualenv_with_ckan, clean_database, clean_solr_index):
 
 @pytest.fixture(scope='module')
 def running_ckan(request, ckan_installation):
+    """
+    Todo: we should return information about:
+
+    - URL on which to reach the Ckan installation
+    - Path to the virtualenv (to be able to run paster commands..)
+    """
+
     PASTER = os.path.join(ckan_installation, 'bin', 'paster')
     ckan_conf_file = os.path.join(ckan_installation, 'etc', 'ckan', 'ckan.ini')
     proc = subprocess.Popen([PASTER, 'serve', ckan_conf_file])

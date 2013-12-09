@@ -8,6 +8,8 @@ import time
 
 import pytest
 
+from fixtures.common import CkanInstallation
+
 
 HERE = os.path.abspath(os.path.dirname(__file__))
 
@@ -205,4 +207,6 @@ def running_ckan(request, ckan_installation):
     request.addfinalizer(cleanup)
 
     time.sleep(5)  # allow some time from coming up
-    return 'http://localhost:5000'
+    return CkanInstallation(
+        url='http://localhost:5000',
+        virtualenv=ckan_installation)

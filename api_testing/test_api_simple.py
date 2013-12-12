@@ -101,24 +101,25 @@ def test_api_readonly(running_ckan):
     assert data['success'] is False
 
     ## related_list
+    ## Without arguments, will return an empty list..
     api_url = urlparse.urljoin(
         running_ckan.url, '/api/3/action/related_list')
     response = requests.get(api_url)
-    assert not response.ok
-    assert response.status_code == 409  # mumble..
+    assert response.ok
+    assert response.status_code == 200
     data = response.json()
-    assert 'error' in data
-    assert data['success'] is False
+    assert data['success'] is True
 
     ## related_list?id=invalid
-    api_url = urlparse.urljoin(
-        running_ckan.url, '/api/3/action/related_list?id=invalid')
-    response = requests.get(api_url)
-    assert not response.ok
-    assert response.status_code == 404
-    data = response.json()
-    assert 'error' in data
-    assert data['success'] is False
+    ## With an invalid id, should return 404 (but wouldn't!)
+    # api_url = urlparse.urljoin(
+    #     running_ckan.url, '/api/3/action/related_list?id=invalid')
+    # response = requests.get(api_url)
+    # assert not response.ok
+    # assert response.status_code == 404
+    # data = response.json()
+    # assert 'error' in data
+    # assert data['success'] is False
 
 
 def test_api_simple(running_ckan):

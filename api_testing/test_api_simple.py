@@ -100,6 +100,26 @@ def test_api_readonly(running_ckan):
     assert 'error' in data
     assert data['success'] is False
 
+    ## related_list
+    api_url = urlparse.urljoin(
+        running_ckan.url, '/api/3/action/related_list')
+    response = requests.get(api_url)
+    assert not response.ok
+    assert response.status_code == 409  # mumble..
+    data = response.json()
+    assert 'error' in data
+    assert data['success'] is False
+
+    ## related_list?id=invalid
+    api_url = urlparse.urljoin(
+        running_ckan.url, '/api/3/action/related_list?id=invalid')
+    response = requests.get(api_url)
+    assert not response.ok
+    assert response.status_code == 404
+    data = response.json()
+    assert 'error' in data
+    assert data['success'] is False
+
 
 def test_api_simple(running_ckan):
     """Base CRUD tests, through the API"""

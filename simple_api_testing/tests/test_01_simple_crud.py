@@ -1,2 +1,2 @@
-def test_something(ckan_url):
+def test_create_package(ckan_url):
     pass

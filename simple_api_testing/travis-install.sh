@@ -34,7 +34,6 @@ sudo cat > /etc/default/jetty <<EOF
 NO_START=0
 JETTY_HOST=127.0.0.1
 JETTY_PORT=8983
-JAVA_HOME=${JAVA_HOME}
 EOF
 
 

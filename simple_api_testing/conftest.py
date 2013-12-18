@@ -128,13 +128,14 @@ class CkanEnvironment(object):
         cursor = conn.cursor()
         cursor.execute("""
         CREATE DATABASE {0}
-          WITH OWNER = ckan
+          WITH OWNER = {1}
                ENCODING = 'UTF8'
                TABLESPACE = pg_default
                LC_COLLATE = 'en_US.UTF-8'
                LC_CTYPE = 'en_US.UTF-8'
                CONNECTION LIMIT = -1;
-        """.format(self.postgresql_db_name))
+        """.format(self.postgresql_db_name,
+                   self.postgresql_user))
 
     def drop_db_user(self):
         conn = self.get_postgres_admin_connection()

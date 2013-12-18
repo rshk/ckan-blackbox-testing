@@ -49,5 +49,6 @@ service jetty start
 
 cp "$VIRTUAL_ENV"/src/ckan/ckan/config/who.ini ${VIRTUAL_ENV}/etc/ckan/
 
+pip install -r ./simple_api_testing/requirements.txt
 pip install -r "$VIRTUAL_ENV"/src/ckan/requirements.txt
 cd "$VIRTUAL_ENV"/src/ckan/ && python setup.py install

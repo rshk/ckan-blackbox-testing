@@ -18,7 +18,6 @@ def post_json(url, api_key, data, **other):
 
 def test_create_package(ckan_env):
     # First, we need to create a user.
-
     user_data = ckan_env.paster_user_add('api_test', **{
         'password': 'password',
         'email': 'admin@example.com',

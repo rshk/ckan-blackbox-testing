@@ -314,6 +314,8 @@ def test_real_case_scenario(ckan_env):
             return data['result']
 
         ## Create a dataset
+        ##------------------------------------------------------------
+
         dataset_obj = {
             'name': 'dataset-1',
             'title': 'Dataset #1',
@@ -328,17 +330,37 @@ def test_real_case_scenario(ckan_env):
             ]
         }
         dataset = create_dataset(dataset_obj)
+        dataset_id = dataset['id']
 
-        ## Now we should try updating..
-        new_dataset = copy.deepcopy(dataset)
-        new_dataset['title'] = 'First dataset'
-        new_dataset['notes'] = 'Updated notes here!'
+        ## Now we should try updating
+        ##------------------------------------------------------------
+        ## Note: apparently there is no way to update just *some*
+        ##       metadata: we have to send the whole object again..
+        ## todo: check whether we should pass even resources / tags
+        ##       / extras too...
+
+        dataset_obj['title'] = 'First dataset'
+        dataset_obj['notes'] = 'Updated notes here!'
+
         response = client.post(
-            '/api/3/action/dataset_update?id={0}'.format(dataset['id']),
-            data=new_dataset)
+            '/api/3/action/dataset_update?id={0}'.format(dataset_id),
+            data=dataset_obj)
         data = check_response(response)
         updated_dataset = data['result']
+        check_dataset(dataset_obj, updated_dataset)
+
+        ## Now get it from the API
+        response = client.get(
+            '/api/3/action/dataset_show?id={0}'.format(dataset_id))
+        data = check_response(response)
+        updated_dataset = data['result']
+        check_dataset(dataset_obj, updated_dataset)
+
+        ## Just to be extra safe..
         assert updated_dataset['title'] == 'First dataset'
         assert updated_dataset['notes'] == 'Updated notes here!'
         assert updated_dataset['url'] == 'http://example.com/dataset-1'
         assert updated_dataset['license_id'] == 'cc-zero'
+
+        ## Ok, now we should try updating extras too..
+        ##------------------------------------------------------------

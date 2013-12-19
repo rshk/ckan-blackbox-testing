@@ -4,7 +4,7 @@ import os
 import random
 import shutil
 import subprocess
-import time
+#import time
 import urlparse
 
 import psycopg2
@@ -27,6 +27,50 @@ HERE = os.path.abspath(os.path.dirname(__file__))
 
 ## Paster command to run server
 # paster --plugin=ckan serve $VIRTUAL_ENV/etc/ckan.ini
+
+
+def wait_net_service(server, port, timeout=None):
+    """
+    Wait for network service to appear
+
+    Based on: http://code.activestate.com/recipes/576655/
+
+    @param timeout: in seconds, if None or 0 wait forever
+    @return: True of False, if timeout is None may return only True or
+             throw unhandled network exception
+    """
+    import socket
+    import errno
+
+    s = socket.socket()
+    if timeout:
+        from time import time as now
+        # time module is needed to calc timeout shared between two exceptions
+        end = now() + timeout
+
+    while True:
+        try:
+            if timeout:
+                next_timeout = end - now()
+                if next_timeout < 0:
+                    return False
+                else:
+                    s.settimeout(next_timeout)
+            s.connect((server, port))
+
+        except socket.timeout, err:
+            # this exception occurs only if timeout is set
+            if timeout:
+                return False
+
+        except socket.error, err:
+            # catch timeout exception from underlying network library
+            # this one is different from socket.timeout
+            if type(err.args) != tuple or err[0] != errno.ETIMEDOUT:
+                raise
+        else:
+            s.close()
+            return True
 
 
 class CkanEnvironment(object):
@@ -176,11 +220,9 @@ class CkanEnvironment(object):
         python = os.path.join(self.venv_root, 'bin', 'python')
         paster = os.path.join(self.venv_root, 'bin', 'paster')
 
-        # todo: we might want to copy the configuration file, so we
-        # can safely alter some configuration values (such as port)?
         return CkanServerWrapper([
             python, paster, 'serve', self.conf_file_path
-        ], url='http://127.0.0.1:{0}'.format(self.server_port))
+        ], host='127.0.0.1', port=self.server_port)
 
     def paster_db_init(self):
         return self.run_paster_with_conf('db', 'init')
@@ -297,13 +339,20 @@ class CkanEnvironment(object):
 
 
 class CkanServerWrapper(object):
-    def __init__(self, args, url):
+    def __init__(self, args, host, port):
         self.args = args
-        self.url = url
+        self.host = host
+        self.port = port
+
+    @property
+    def url(self):
+        return 'http://{host}:{port}/'.format(host=self.host, port=self.port)
 
     def start(self):
         self.process = subprocess.Popen(self.args)
-        time.sleep(1)
+
+        ## Wait for the server to come up
+        wait_net_service(self.host, self.port, timeout=20)
         return self.process
 
     def stop(self):

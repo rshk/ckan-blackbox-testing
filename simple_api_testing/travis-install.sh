@@ -5,6 +5,8 @@
 ## - install solr
 ## - install Ckan in a virtualenv
 
+set -e  # Fail soon!
+
 cd "$( dirname "$0" )"
 
 if [ -z "$VIRTUAL_ENV" ]; then
@@ -30,10 +32,11 @@ sudo -u postgres -H psql -c "ALTER USER postgres PASSWORD 'pass'"
 sudo apt-get install solr-jetty
 sudo service jetty stop
 
-sudo cat > /etc/default/jetty <<EOF
+sudo tee /etc/default/jetty <<EOF
 NO_START=0
 JETTY_HOST=127.0.0.1
 JETTY_PORT=8983
+JAVA_HOME=$JAVA_HOME
 EOF
 
 

@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+
+import copy
 import random
 
 import pytest
@@ -325,11 +327,18 @@ def test_real_case_scenario(ckan_env):
                 {'key': 'extra1', 'value': 'Extra value #1'},
             ]
         }
-        data = create_dataset(dataset_obj)
-        dataset_id = data['id']
+        dataset = create_dataset(dataset_obj)
 
-        ## Get the dataset back and check
-        response = client.get('/api/3/action/package_show?id={0}'
-                              .format(dataset_id))
+        ## Now we should try updating..
+        new_dataset = copy.deepcopy(dataset)
+        new_dataset['title'] = 'First dataset'
+        new_dataset['notes'] = 'Updated notes here!'
+        response = client.post(
+            '/api/3/action/dataset_update?id={0}'.format(dataset['id']),
+            data=new_dataset)
         data = check_response(response)
-        assert data['result']['id'] == dataset_id
+        updated_dataset = data['result']
+        assert updated_dataset['title'] == 'First dataset'
+        assert updated_dataset['notes'] == 'Updated notes here!'
+        assert updated_dataset['url'] == 'http://example.com/dataset-1'
+        assert updated_dataset['license_id'] == 'cc-zero'

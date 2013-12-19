@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import random
 
 import pytest
@@ -6,9 +7,59 @@ from .utils import CkanClient
 
 
 DUMMY_PACKAGES = {}
-DUMMY_PACKAGES['package_0'] = {
+DUMMY_PACKAGES['simplest_package'] = {
     'name': 'hello-dataset',
-    'title': 'Hello, dataset!'
+    'title': 'Hello, dataset!',
+}
+DUMMY_PACKAGES['package_with_metadata'] = {
+    'name': 'package-with-metadata',
+    'title': 'Package with metadata',
+    'author': 'Author Name',
+    'author_email': 'author.name@example.com',
+    'maintainer': 'Maintainer Name',
+    'maintainer_email': 'maintainer.name@example.com',
+    'license_id': 'cc-by',
+    'notes': 'Just a bunch of notes',
+    'url': 'http://example.com/dataset/package-with-metadata',
+    'state': 'active',
+    #'type': 'dataset',
+
+    #'resources': [],
+    #'tags': [],
+    #'extras': [{'key': 'Fuck', 'value': 'This!'}],
+    #'groups': [],
+    #'owner_org': ['dummy-org'],
+}
+DUMMY_PACKAGES['package_with_extras'] = {
+    'name': 'package-with-extras',
+    'title': 'Package with extras',
+    'author': 'Author Name',
+    'author_email': 'author.name@example.com',
+    'maintainer': 'Maintainer Name',
+    'maintainer_email': 'maintainer.name@example.com',
+    'license_id': 'cc-by',
+    'notes': 'Just a bunch of notes',
+    'url': 'http://example.com/dataset/package-with-extras',
+    'state': 'active',
+
+    'extras': [
+        {'key': 'Extra field #1', 'value': 'Extra value #1'},
+        {'key': 'Extra field #2', 'value': 'Extra value #2'},
+        {'key': 'Extra field #3', 'value': 'Extra value #3'},
+    ],
+}
+DUMMY_PACKAGES['package_with_tags'] = {
+    'name': 'package-with-tags',
+    'title': 'Package with tags',
+    'license_id': 'cc-by',
+    'url': 'http://example.com/dataset/package-with-tags',
+    'state': 'active',
+
+    'tags': [
+        {'name': 'Tag One'},
+        {'name': 'Tag Two'},
+        {'name': 'Tag Three'},
+    ],
 }
 
 
@@ -56,6 +107,7 @@ def test_simple_package_crud(ckan_env):
                               .format(dataset_id))
         assert response.ok
         assert response.status_code == 200
+        data = response.json()
         assert data['success'] is True
         assert 'result' in data
         assert data['result']['id'] == dataset_id
@@ -96,6 +148,18 @@ def test_package_creation(ckan_env, dummy_package):
         assert data['success'] is True
         assert 'result' in data
         assert data['result']['id'] == dataset_id
+
+        ## Check that keys match
+        for key in dummy_package:
+            if key in ('tags',):
+                continue
+            assert data['result'][key] == dummy_package[key]
+
+        ## Check that tags match
+        if 'tags' in dummy_package:
+            expected_tags = sorted(x['name'] for x in dummy_package['tags'])
+            actual_tags = sorted(x['name'] for x in data['result']['tags'])
+            assert actual_tags == expected_tags
 
         # # Delete the dataset
         # # url = urlparse.urljoin(server.url, '/api/3/action/package_delete')

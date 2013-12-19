@@ -2,11 +2,42 @@
 
 [![Build Status](https://travis-ci.org/rshk/ckan-blackbox-testing.png?branch=master)](https://travis-ci.org/rshk/ckan-blackbox-testing)
 
-This project (meant to be run on Travis CI) will:
+"Black-box" test suite for [Ckan](https://github.com/okfn/ckan).
 
-- Create a PostgreSQL database
-- Install Solr
-- Create a virtualenv
-- Install Ckan in the virtualenv
-- Run Ckan
-- Perform a bunch of tests
+
+## Running tests
+
+Requirements:
+
+- Python virtualenv, with Ckan installed
+- PostgreSQL instance, with administrative access
+- Solr instance, with Ckan schema installed
+
+Running this:
+
+```
+export CKAN_VIRTUALENV=$VIRTUAL_ENV
+export CKAN_POSTGRES_ADMIN=postgresql://postgres:pass@localhost/postgres
+export CKAN_SOLR=http://127.0.0.1:8983/solr
+
+python ./simple_api_testing/run_tests.py
+```
+
+(Have a look at the ``simple_api_testing/travis-*.sh`` scripts for more examples)
+
+
+## How does it work?
+
+We provide a bunch of py.test fixtures that will:
+
+- create / drop postgresql user and database for each test module run
+- flush the solr index on each module run
+- provide facilities for running / stopping the ``paster serve`` process
+
+
+## TodoList
+
+- Figure out a nice way to trigger builds "the other way round", i.e.
+  when a change is pushed on the ckan repository (in any branch, ...)
+- Write complete test suite for Ckan API
+- Maybe, add tests for the web pages too

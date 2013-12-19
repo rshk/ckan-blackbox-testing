@@ -6,6 +6,8 @@ import urlparse
 
 
 class CkanClient(object):
+    """Simple client for the Ckan API"""
+
     def __init__(self, url, api_key=None):
         self.url = url
         self.api_key = api_key
@@ -29,21 +31,6 @@ class CkanClient(object):
 
     def post(self, *a, **kw):
         return self.request('post', *a, **kw)
-
-
-# def json_request(method, url, api_key, data, **other):
-#     data = json.dumps(data)
-#     if 'headers' not in other:
-#         other['headers'] = {}
-#     if not isinstance(other['headers'], CaseInsensitiveDict):
-#         other['headers'] = CaseInsensitiveDict(other['headers'])
-#     other['headers']['Authorization'] = api_key
-#     other['headers']['Content-type'] = 'application/json'
-#     return requests.request(method, url, data=data, **other)
-
-
-# def post_json(url, api_key, data, **other):
-#     return json_request('post', url, api_key, data, **other)
 
 
 def test_create_package(ckan_env):

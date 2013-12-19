@@ -4,7 +4,7 @@ import os
 import random
 import shutil
 import subprocess
-#import time
+import time
 import urlparse
 
 import psycopg2
@@ -29,46 +29,36 @@ HERE = os.path.abspath(os.path.dirname(__file__))
 # paster --plugin=ckan serve $VIRTUAL_ENV/etc/ckan.ini
 
 
-def wait_net_service(server, port, timeout=None):
+def wait_net_service(server, port, timeout):
     """
     Wait for network service to appear
 
     Based on: http://code.activestate.com/recipes/576655/
 
-    @param timeout: in seconds, if None or 0 wait forever
+    @param timeout: in seconds
     @return: True of False, if timeout is None may return only True or
              throw unhandled network exception
     """
     import socket
-    import errno
 
     s = socket.socket()
-    if timeout:
-        from time import time as now
-        # time module is needed to calc timeout shared between two exceptions
-        end = now() + timeout
+    end = time.time() + timeout
 
     while True:
+
         try:
-            if timeout:
-                next_timeout = end - now()
-                if next_timeout < 0:
-                    return False
-                else:
-                    s.settimeout(next_timeout)
+            next_timeout = end - time.time()
+            if next_timeout < 0:
+                raise Exception("Timed out")
+
+            s.settimeout(next_timeout)
             s.connect((server, port))
 
-        except socket.timeout, err:
-            # this exception occurs only if timeout is set
-            if timeout:
-                return False
+        except socket.error:
+            pass  # Keep suppressing exceptions
 
-        except socket.error, err:
-            # catch timeout exception from underlying network library
-            # this one is different from socket.timeout
-            if type(err.args) != tuple or err[0] != errno.ETIMEDOUT:
-                raise
         else:
+            # Connection successful!
             s.close()
             return True
 
@@ -264,7 +254,8 @@ class CkanEnvironment(object):
         os.makedirs(self.storage_path)
 
         ## Port on which server will listen
-        self.server_port = self.get_ephemeral_port()
+        #self.server_port = self.get_ephemeral_port()
+        self.server_port = 5000
 
         parsed_pg_url = urlparse.urlparse(self.postgresql_admin_url)
         assert parsed_pg_url.scheme == 'postgresql'
@@ -284,7 +275,6 @@ class CkanEnvironment(object):
         self.postgresql_password = binascii.hexlify(os.urandom(20))
 
         self.site_id = 'ckan_test_{0}'.format(my_id)
-        self.server_port = self.get_ephemeral_port()
 
         ## Make sure the configuration directory is there
         conf_dir = os.path.dirname(self.conf_file_path)

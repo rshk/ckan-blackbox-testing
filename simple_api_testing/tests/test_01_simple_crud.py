@@ -74,6 +74,74 @@ def get_sysadmin_api_key(ckan_env):
     return user_data['apikey']
 
 
+def check_response(response, code=200):
+    assert response.ok
+    assert response.status_code == code
+    data = response.json()
+    assert data['success'] is True
+    assert 'result' in data
+    return data
+
+
+def check_dataset(expected, actual):
+    """
+    Check that values in "actual" match the ones in "expected".
+    """
+
+    assert 'id' in actual
+    assert isinstance(expected, dict)
+    assert isinstance(actual, dict)
+
+    if 'id' in expected:
+        assert actual['id'] == expected['id']
+
+    ## Make sure everything is ok
+    for key, value in expected.iteritems():
+        if key == 'tags':
+            check_dataset_tags(expected[key], actual[key])
+
+        elif key == 'extras':
+            ## todo: we should check that, for example, we don't have
+            ##       duplicate keys...
+            assert sorted(actual[key]) == sorted(value)
+
+        elif key == 'resources':
+            check_dataset_resources(expected[key], actual[key])
+
+        else:
+            ## This key is not to be handled in a special way
+            assert actual[key] == expected[key]
+
+
+def check_dataset_resources(expected, actual):
+    ## We need to check only the fields specified in the
+    ## "expected" object. But we need to reorder resources
+    ## in a dictionary to compare..
+    assert len(actual) == len(expected)
+
+    ## We group them by name as the id is generated, so we can't
+    ## expect one..
+    expected_resources = dict((r['name'], r) for r in expected)
+    assert len(expected) == len(expected_resources)
+
+    actual_resources = dict((r['name'], r) for r in actual)
+    assert len(actual) == len(actual_resources)
+
+    for res_id in expected_resources:
+        expected_resource = expected_resources[res_id]
+        actual_resource = actual_resources[res_id]
+        for key_id in expected_resource:
+            assert expected_resource[key_id] \
+                == actual_resource[key_id]
+
+
+def check_dataset_tags(expected, actual):
+    ## Tags have a lot of extra fields, we only care about some of them..
+    expected_tags = sorted(x['name'] for x in expected)
+    actual_tags = sorted(x['name'] for x in actual)
+    assert actual_tags == expected_tags
+
+
 @pytest.fixture(params=sorted(DUMMY_PACKAGES.keys()))
 def dummy_package(request):
     return DUMMY_PACKAGES[request.param]
@@ -105,10 +173,7 @@ def test_simple_package_crud(ckan_env):
         # Get it back
         response = client.get('/api/3/action/package_show?id={0}'
                               .format(dataset_id))
-        assert response.ok
-        assert response.status_code == 200
-        data = response.json()
-        assert data['success'] is True
+        data = check_response(response)
         assert 'result' in data
         assert data['result']['id'] == dataset_id
 
@@ -224,3 +289,47 @@ def test_real_case_scenario(ckan_env):
         assert data['success'] is True
         assert 'result' in data
         assert data['result']['id'] == organization_id
+
+        def create_dataset(data):
+            """
+            Create a dataset and check that everything is ok
+
+            :param data: Data for the dataset to be created
+            :return: The created dataset object
+            """
+
+            ## Create dataset
+            response = client.post('/api/3/action/package_create', data=data)
+            data = check_response(response)
+            dataset_id = data['result']['id']
+
+            ## Get the dataset back and check
+            response = client.get('/api/3/action/package_show?id={0}'
+                                  .format(dataset_id))
+            data = check_response(response)
+            assert data['result']['id'] == dataset_id
+
+            return data['result']
+
+        ## Create a dataset
+        dataset_obj = {
+            'name': 'dataset-1',
+            'title': 'Dataset #1',
+            'url': 'http://example.com/dataset-1',
+            'state': 'active',
+            'license_id': 'cc-zero',
+            'notes': 'Some notes for the first dataset',
+            'owner_org': organization_id,
+            'extras': [
+                {'key': 'extra0', 'value': 'Extra value #0'},
+                {'key': 'extra1', 'value': 'Extra value #1'},
+            ]
+        }
+        data = create_dataset(dataset_obj)
+        dataset_id = data['id']
+
+        ## Get the dataset back and check
+        response = client.get('/api/3/action/package_show?id={0}'
+                              .format(dataset_id))
+        data = check_response(response)
+        assert data['result']['id'] == dataset_id

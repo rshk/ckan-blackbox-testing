@@ -167,3 +167,60 @@ def test_package_creation(ckan_env, dummy_package):
         # response = client.post('/api/3/action/package_delete',
         #                        data={'id': dataset_id})
         # assert response.ok
+
+
+def test_real_case_scenario(ckan_env):
+    """
+    "Real case" scenario:
+
+    - create an organization
+    - add some datasets associated with the organization
+    - check state
+    - update datasets (add, update, delete)
+    - check state
+
+    """
+
+    state = {}
+    state[0] = {
+        'http://www.example.com/dataset-1': {
+            'name': 'dataset-1',
+            'title': 'Dataset #1',
+            'info': {
+                'key_1': 'value_1',
+                'key_2': 'value_2',
+            },
+            'resources': [
+                {'url': 'http://www.example.com/dataset-1/resource1.json',
+                 'mimetype': 'application/json'},
+                {'url': 'http://www.example.com/dataset-1/resource2.json',
+                 'mimetype': 'application/json'},
+            ]
+        }
+    }
+
+    API_KEY = get_sysadmin_api_key(ckan_env)
+
+    with ckan_env.serve() as server:
+        client = CkanClient(server.url, api_key=API_KEY)
+
+        ## Create our organization
+        response = client.post('/api/3/action/organization_create', data={
+            'name': 'my-organization',
+            'title': 'My organization',
+        })
+        assert response.ok
+        assert response.status_code == 200
+        data = response.json()
+        assert data['success'] is True
+        organization_id = data['result']['id']
+
+        ## Get the organization back
+        response = client.get('/api/3/action/organization_show?id={0}'
+                              .format(organization_id))
+        assert response.ok
+        assert response.status_code == 200
+        data = response.json()
+        assert data['success'] is True
+        assert 'result' in data
+        assert data['result']['id'] == organization_id

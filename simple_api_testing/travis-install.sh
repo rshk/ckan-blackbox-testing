@@ -49,7 +49,8 @@ git clone "$REPO_URL" -b "$REPO_BRANCH" --depth=0 "$VIRTUAL_ENV"/src/ckan
 sudo cp "$VIRTUAL_ENV"/src/ckan/ckan/config/solr/schema-2.0.xml /etc/solr/conf/schema.xml
 sudo service jetty start
 
-cp "$VIRTUAL_ENV"/src/ckan/ckan/config/who.ini ${VIRTUAL_ENV}/etc/ckan/
+ln -s . ${VIRTUAL_ENV}/etc/ckan
+cp "$VIRTUAL_ENV"/src/ckan/ckan/config/who.ini ${VIRTUAL_ENV}/etc/
 
 pip install -r ./requirements.txt
 pip install -r "$VIRTUAL_ENV"/src/ckan/requirements.txt

@@ -41,3 +41,7 @@ We provide a bunch of py.test fixtures that will:
   when a change is pushed on the ckan repository (in any branch, ...)
 - Write complete test suite for Ckan API
 - Maybe, add tests for the web pages too
+
+
+[![Bitdeli Badge](https://d2weczhvl823v0.cloudfront.net/rshk/ckan-blackbox-testing/trend.png)](https://bitdeli.com/free "Bitdeli Badge")
+

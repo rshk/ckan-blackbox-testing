@@ -404,6 +404,13 @@ def test_real_case_scenario(ckan_env):
         ## todo: check whether we should pass even resources / tags
         ##       / extras too...
 
+        ## Note: we need some better way to check what's going on;
+        ## we need to determine / make sure *which* fields should be sent
+        ## back during the update, which have no effect, which are ignored,
+        ## etc.
+        ## Also, we need to make sure on how exactly the "extra" field
+        ## works..
+
         dataset_obj['title'] = 'First dataset'
         dataset_obj['notes'] = 'Updated notes here!'
 

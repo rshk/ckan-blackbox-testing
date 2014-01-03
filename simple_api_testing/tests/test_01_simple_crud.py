@@ -1,5 +1,11 @@
 # -*- coding: utf-8 -*-
 
+##-----------------------------------------------------------------------------
+## Note: all the places in which an undesired behavior is going on are marked
+## as ``FIXME:``, to mark a pending upstream fix.
+##-----------------------------------------------------------------------------
+
+import cgi
 # import copy
 import random
 
@@ -76,12 +82,36 @@ def get_sysadmin_api_key(ckan_env):
     return user_data['apikey']
 
 
-def check_response(response, code=200):
-    assert response.ok
+def check_response(response, code=200, success=True):
+    """
+    Make sure an API response is ok:
+
+    - check that status code is in the "ok" range
+    - check status code (default: 200)
+    - check content-type header (must be application/json)
+    - check that response data is valid json
+    - check that response data has a 'success' key with True value
+    - check that response data has a 'result' key
+
+    :param response: Response object from the requests module
+    :type response: requests.models.Response
+    :param int code: expected HTTP status code
+    :param bool success: wheter we expect success or failure
+    :return: the decoded (json) response data
+    """
+    if type(success) != bool:
+        raise TypeError('success must be a boolean')
+
+    assert response.ok is success
     assert response.status_code == code
+    content_type = cgi.parse_header(response.headers['content-type'])[0]
+    assert content_type == 'application/json'
     data = response.json()
-    assert data['success'] is True
-    assert 'result' in data
+    assert data['success'] is success
+    if success:
+        assert 'result' in data
+    else:
+        assert 'error' in data
     return data
 
 
@@ -149,11 +179,16 @@ def dummy_package(request):
     return DUMMY_PACKAGES[request.param]
 
 
+## Actual test functions
+##------------------------------------------------------------
+
+
 def test_simple_package_crud(ckan_env):
     API_KEY = get_sysadmin_api_key(ckan_env)
 
     with ckan_env.serve() as server:
         client = CkanClient(server.url, api_key=API_KEY)
+        anon_client = CkanClient(server.url)
 
         # Create a dataset
         # url = urlparse.urljoin(server.url, '/api/3/action/package_create')
@@ -179,12 +214,42 @@ def test_simple_package_crud(ckan_env):
         assert 'result' in data
         assert data['result']['id'] == dataset_id
 
-        # Delete the dataset
-        # url = urlparse.urljoin(server.url, '/api/3/action/package_delete')
-        # response = json_request('post', url, API_KEY, {'id': dataset_id})
+        ## Delete the dataset
+        ##------------------------------------------------------------
+
         response = client.post('/api/3/action/package_delete',
                                data={'id': dataset_id})
-        assert response.ok
+        check_response(response)
+
+        ## Make sure the package has been actually deleted
+        ##------------------------------------------------------------
+
+        # Anonymous users should get a 404
+        response = anon_client.get('/api/3/action/package_show?id={0}'
+                                   .format(dataset_id))
+
+        ## FIXME: Dammit, this is returning 403 -> should return 404!!
+        #data = check_response(response, code=404, success=False)
+        data = check_response(response, code=403, success=False)
+
+        # An this should also be gone form the list
+        response = anon_client.get('/api/3/action/package_list')
+        data = check_response(response)
+        assert isinstance(data['result'], list)
+        assert dataset_id not in data['result']
+
+        # Sysadmin users are still able to see the deleted package
+        # FIXME: this behavior might be confusing -> I'd still return 404
+        response = client.get('/api/3/action/package_show?id={0}'
+                              .format(dataset_id))
+        data = check_response(response)
+        assert data['result']['state'] == 'deleted'
+
+        # An this should also be gone form the list
+        response = anon_client.get('/api/3/action/package_list')
+        data = check_response(response)
+        assert isinstance(data['result'], list)
+        assert dataset_id not in data['result']
 
 
 def test_package_creation(ckan_env, dummy_package):

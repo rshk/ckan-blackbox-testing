@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-import copy
+# import copy
 import random
 
 import pytest

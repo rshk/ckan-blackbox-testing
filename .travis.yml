@@ -5,6 +5,7 @@ branches:
     - gh-pages
 
 python:
+  - "2.6"
   - "2.7"
 
 install:
@@ -21,7 +22,7 @@ env:
     # - REPO_URL=https://github.com/rshk/ckan REPO_BRANCH=master
     # - REPO_URL=https://github.com/rshk/ckan REPO_BRANCH=integration
 
-# matrix:
-#   allow_failures:
-#     - env: REPO_URL=https://github.com/ckan/ckan REPO_BRANCH=master
-#     - env: REPO_URL=https://github.com/rshk/ckan REPO_BRANCH=master
+matrix:
+  allow_failures:
+    # ckan-2.1 is really buggy..
+    - env: REPO_URL=https://github.com/ckan/ckan REPO_BRANCH=2.1
